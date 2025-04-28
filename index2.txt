@@ -1,0 +1,116 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>WiseWatt Login</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            background: linear-gradient(#e0f7fa, #ffffff);
+            text-align: center;
+            padding: 50px;
+        }
+        #loginPage, #chargePage {
+            display: none;
+        }
+        button {
+            padding: 10px 20px;
+            background-color: #00796b;
+            color: white;
+            border: none;
+            border-radius: 8px;
+            cursor: pointer;
+        }
+        button:hover {
+            background-color: #004d40;
+        }
+    </style>
+</head>
+<body>
+
+    <!-- Login Page -->
+    <div id="loginPage">
+        <h1>WiseWatt</h1>
+        <h2>Login</h2>
+        <input type="text" id="username" placeholder="Enter Username"><br><br>
+        <input type="password" id="password" placeholder="Enter Password"><br><br>
+        <button onclick="login()">Login</button>
+    </div>
+
+    <!-- Charging Status Page -->
+    <div id="chargePage">
+        <h1>Welcome to WiseWatt</h1>
+        <h2>Battery Status: <span id="batteryLevel">Loading...</span>%</h2>
+        <h3 id="timerText"></h3>
+    </div>
+
+    <!-- Alert Sound -->
+    <audio id="alertSound" src="alert.mp3" preload="auto"></audio>
+
+    <script>
+        // Show login page first
+        document.getElementById('loginPage').style.display = 'block';
+
+        function login() {
+            var user = document.getElementById('username').value;
+            var pass = document.getElementById('password').value;
+
+            if(user && pass) {
+                document.getElementById('loginPage').style.display = 'none';
+                document.getElementById('chargePage').style.display = 'block';
+                monitorBattery();
+            } else {
+                alert("Please enter username and password");
+            }
+        }
+
+        function monitorBattery() {
+            if ('getBattery' in navigator) {
+                navigator.getBattery().then(function(battery) {
+                    updateBatteryLevel(battery);
+
+                    battery.addEventListener('levelchange', function() {
+                        updateBatteryLevel(battery);
+                    });
+                });
+            } else {
+                alert("Battery API not supported on this device.");
+            }
+        }
+
+        function updateBatteryLevel(battery) {
+            var level = Math.floor(battery.level * 100);
+            document.getElementById('batteryLevel').textContent = level;
+
+            if(level >= 100) {
+                fullChargeActions();
+            }
+        }
+
+        function fullChargeActions() {
+            alert("Charging Complete! Please unplug your device.");
+            document.getElementById('alertSound').play();
+            start20MinTimer();
+        }
+
+        function start20MinTimer() {
+            var secondsLeft = 20 * 60; // 20 minutes
+            var timer = setInterval(function() {
+                var minutes = Math.floor(secondsLeft / 60);
+                var seconds = secondsLeft % 60;
+                document.getElementById('timerText').textContent = 
+                    Please unplug within ${minutes} minutes and ${seconds} seconds.;
+                secondsLeft--;
+
+                if (secondsLeft < 0) {
+                    clearInterval(timer);
+                    document.getElementById('timerText').textContent = 
+                        "⚡ Time Over! Please unplug the charger.";
+                }
+            }, 1000);
+        }
+    </script>
+
+</body>
+</html>
